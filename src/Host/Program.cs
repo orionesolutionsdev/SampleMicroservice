@@ -1,5 +1,8 @@
+using Microsoft.ApplicationInsights.Extensibility;
 using Serilog;
+using Serilog.Events;
 using Serilog.Exceptions;
+using Serilog.Sinks.ApplicationInsights.TelemetryConverters;
 using SampleMicroservice.Application;
 using SampleMicroservice.Host.Configurations;
 using SampleMicroservice.Infrastructure;
@@ -16,17 +19,29 @@ try
 
     var serviceName = builder.Configuration["LoggerSettings:AppName"] ?? "SampleMicroservice";
 
-    builder.Host.UseSerilog((ctx, lc) => lc
-        .ReadFrom.Configuration(ctx.Configuration)
-        .Enrich.FromLogContext()
-        .Enrich.WithExceptionDetails()
-        .Enrich.WithMachineName()
-        .Enrich.WithProcessId()
-        .Enrich.WithThreadId()
-        .Enrich.WithProperty("ServiceName", serviceName)
-        .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName)
-        .WriteTo.Console(outputTemplate:
-            "[{Timestamp:HH:mm:ss} {Level:u3}] [{ServiceName}] [CID:{CorrelationId}] {Message:lj}{NewLine}{Exception}"));
+    builder.Host.UseSerilog((ctx, lc) =>
+    {
+        lc
+            .ReadFrom.Configuration(ctx.Configuration)
+            .Enrich.FromLogContext()
+            .Enrich.WithExceptionDetails()
+            .Enrich.WithMachineName()
+            .Enrich.WithProcessId()
+            .Enrich.WithThreadId()
+            .Enrich.WithProperty("ServiceName", serviceName)
+            .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName)
+            .WriteTo.Console(outputTemplate:
+                "[{Timestamp:HH:mm:ss} {Level:u3}] [{ServiceName}] [CID:{CorrelationId}] {Message:lj}{NewLine}{Exception}");
+
+        var aiConnectionString = ctx.Configuration["ApplicationInsights:ConnectionString"];
+        if (!string.IsNullOrWhiteSpace(aiConnectionString))
+        {
+            lc.WriteTo.ApplicationInsights(
+                new TelemetryConfiguration { ConnectionString = aiConnectionString },
+                TelemetryConverter.Traces,
+                restrictedToMinimumLevel: LogEventLevel.Information);
+        }
+    });
 
     builder.Services.AddControllers();
     builder.Services.AddInfrastructure(builder.Configuration);

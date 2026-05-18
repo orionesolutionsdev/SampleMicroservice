@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using MediatR;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -63,6 +64,10 @@ public static class Startup
     {
         var serviceName = config["LoggerSettings:AppName"] ?? "SampleMicroservice";
         var otlpEndpoint = config["OpenTelemetry:Endpoint"];
+        var aiConnectionString = config["ApplicationInsights:ConnectionString"];
+
+        if (!string.IsNullOrWhiteSpace(aiConnectionString))
+            services.AddApplicationInsightsTelemetry(o => o.ConnectionString = aiConnectionString);
 
         services.AddOpenTelemetry()
             .ConfigureResource(r => r.AddService(serviceName))
