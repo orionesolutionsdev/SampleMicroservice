@@ -3,7 +3,4 @@
     Standalone targets file — stops MSBuild from inheriting the monolith root
     Directory.Build.targets.
   -->
-  <PropertyGroup>
-    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
-  </PropertyGroup>
 </Project>

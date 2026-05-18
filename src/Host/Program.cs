@@ -12,6 +12,10 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    builder.AddConfigurations();
+
+    var serviceName = builder.Configuration["LoggerSettings:AppName"] ?? "SampleMicroservice";
+
     builder.Host.UseSerilog((ctx, lc) => lc
         .ReadFrom.Configuration(ctx.Configuration)
         .Enrich.FromLogContext()
@@ -19,9 +23,10 @@ try
         .Enrich.WithMachineName()
         .Enrich.WithProcessId()
         .Enrich.WithThreadId()
-        .WriteTo.Console());
-
-    builder.AddConfigurations();
+        .Enrich.WithProperty("ServiceName", serviceName)
+        .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName)
+        .WriteTo.Console(outputTemplate:
+            "[{Timestamp:HH:mm:ss} {Level:u3}] [{ServiceName}] [CID:{CorrelationId}] {Message:lj}{NewLine}{Exception}"));
 
     builder.Services.AddControllers();
     builder.Services.AddInfrastructure(builder.Configuration);
@@ -29,7 +34,6 @@ try
 
     var app = builder.Build();
 
-    // Ensure database is created (in-memory or EnsureCreated for dev)
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<SampleMicroserviceDbContext>();

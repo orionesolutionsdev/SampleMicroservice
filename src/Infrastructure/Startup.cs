@@ -4,9 +4,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using SampleMicroservice.Application.Common.Interfaces;
 using SampleMicroservice.Application.Common.Persistence;
 using SampleMicroservice.Infrastructure.Auth;
+using SampleMicroservice.Infrastructure.Http;
 using SampleMicroservice.Infrastructure.Middleware;
 using SampleMicroservice.Infrastructure.Persistence.Context;
 using SampleMicroservice.Infrastructure.Persistence.Repository;
@@ -34,6 +37,8 @@ public static class Startup
 
         services
             .AddTransient<ExceptionMiddleware>()
+            .AddTransient<CorrelationIdMiddleware>()
+            .AddTransient<CorrelationIdDelegatingHandler>()
             .AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         services.AddHealthChecks();
@@ -46,9 +51,36 @@ public static class Startup
         });
 
         services
+            .AddObservability(config)
             .AddPersistence(config)
             .AddCurrentUser()
             .AddApplicationServices();
+
+        return services;
+    }
+
+    private static IServiceCollection AddObservability(this IServiceCollection services, IConfiguration config)
+    {
+        var serviceName = config["LoggerSettings:AppName"] ?? "SampleMicroservice";
+        var otlpEndpoint = config["OpenTelemetry:Endpoint"];
+
+        services.AddOpenTelemetry()
+            .ConfigureResource(r => r.AddService(serviceName))
+            .WithTracing(tracing =>
+            {
+                tracing
+                    .AddAspNetCoreInstrumentation(o =>
+                    {
+                        o.RecordException = true;
+                        o.EnrichWithHttpRequest = (activity, request) =>
+                            activity.SetTag("correlation.id",
+                                request.Headers[CorrelationIdMiddleware.HeaderName].FirstOrDefault());
+                    })
+                    .AddHttpClientInstrumentation();
+
+                if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+                    tracing.AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint));
+            });
 
         return services;
     }
@@ -99,8 +131,12 @@ public static class Startup
         return services;
     }
 
+    // Middleware order matters:
+    // CorrelationId first → pushes CorrelationId into Serilog context for ALL downstream logs
+    // ExceptionMiddleware second → error logs automatically include CorrelationId
     public static IApplicationBuilder UseInfrastructure(this IApplicationBuilder builder, IConfiguration config) =>
         builder
+            .UseMiddleware<CorrelationIdMiddleware>()
             .UseMiddleware<ExceptionMiddleware>()
             .UseRouting()
             .UseAuthentication()
