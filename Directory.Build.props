@@ -1,0 +1,18 @@
+<Project>
+  <!--
+    This file intentionally stops MSBuild from inheriting the monolith root
+    Directory.Build.props. The SampleMicroservice is a standalone service and
+    must not depend on any monolith-level build configuration.
+  -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Mirror the monolith convention: DefaultIdType = Guid -->
+    <Using Include="System.Guid" Alias="DefaultIdType" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,9 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": ""
+  },
+  "DatabaseSettings": {
+    "DBProvider": "inmemory",
+    "ConnectionString": ""
+  }
+}

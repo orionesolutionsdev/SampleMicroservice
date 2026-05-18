@@ -1,0 +1,93 @@
+# =========================
+# Build folders
+# =========================
+bin/
+obj/
+out/
+publish/
+
+# =========================
+# User-specific files
+# =========================
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# =========================
+# Visual Studio
+# =========================
+.vs/
+.vscode/
+.idea/
+
+# =========================
+# Rider
+# =========================
+_ReSharper*/
+*.DotSettings.user
+
+# =========================
+# NuGet
+# =========================
+packages/
+*.nupkg
+.nuget/
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Environment files
+# =========================
+.env
+.env.*
+
+# =========================
+# ASP.NET Core
+# =========================
+appsettings.Development.json
+
+# =========================
+# Test Results
+# =========================
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# =========================
+# Publish output
+# =========================
+publish/
+wwwroot/lib/
+
+# =========================
+# OS generated files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# JetBrains Rider
+# =========================
+*.sln.iml
+
+# =========================
+# Azure
+# =========================
+.publishsettings
+
+# =========================
+# IIS Express
+# =========================
+iisexpress/
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/

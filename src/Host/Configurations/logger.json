@@ -1,0 +1,9 @@
+{
+  "LoggerSettings": {
+    "AppName": "SampleMicroservice",
+    "ElasticSearchUrl": "",
+    "WriteToFile": false,
+    "StructuredConsoleLogging": false,
+    "MinimumLogLevel": "Information"
+  }
+}
